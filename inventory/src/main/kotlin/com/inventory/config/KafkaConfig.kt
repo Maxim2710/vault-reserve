@@ -1,13 +1,20 @@
 package com.inventory.config
 
+import com.inventory.dto.event.ordered.OrderCreatedEvent
+import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.annotation.EnableKafka
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
+import org.springframework.kafka.core.ConsumerFactory
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.core.ProducerFactory
+import org.springframework.kafka.support.serializer.JsonDeserializer
 import org.springframework.kafka.support.serializer.JsonSerializer
 
 @Configuration
@@ -33,5 +40,30 @@ class KafkaConfig {
     @Bean
     fun kafkaTemplate(): KafkaTemplate<String, Any> {
         return KafkaTemplate(producerFactory())
+    }
+
+    @Bean
+    fun consumerFactory(): ConsumerFactory<String, OrderCreatedEvent> {
+        val configProps = hashMapOf<String, Any>(
+            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092",
+            ConsumerConfig.GROUP_ID_CONFIG to "inventory-group",
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to JsonDeserializer::class.java,
+            ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest",
+            ConsumerConfig.ISOLATION_LEVEL_CONFIG to "read_commited"
+        )
+
+        val deserializer = JsonDeserializer(OrderCreatedEvent::class.java)
+        deserializer.addTrustedPackages("*")
+
+        return DefaultKafkaConsumerFactory(configProps, StringDeserializer(), deserializer)
+    }
+
+    @Bean
+    fun kafkaListenerContainerFactory(): ConcurrentKafkaListenerContainerFactory<String, OrderCreatedEvent> {
+        val factory = ConcurrentKafkaListenerContainerFactory<String, OrderCreatedEvent>()
+        factory.consumerFactory = consumerFactory()
+
+        return factory
     }
 }
