@@ -14,6 +14,7 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.core.ProducerFactory
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
 import org.springframework.kafka.support.serializer.JsonDeserializer
 import org.springframework.kafka.support.serializer.JsonSerializer
 
@@ -47,16 +48,18 @@ class KafkaConfig {
         val configProps = hashMapOf<String, Any>(
             ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092",
             ConsumerConfig.GROUP_ID_CONFIG to "inventory-group",
-            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
-            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to JsonDeserializer::class.java,
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to ErrorHandlingDeserializer::class.java,
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to ErrorHandlingDeserializer::class.java,
             ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest",
-            ConsumerConfig.ISOLATION_LEVEL_CONFIG to "read_commited"
+            ConsumerConfig.ISOLATION_LEVEL_CONFIG to "read_committed",
+            "spring.deserializer.key.delegate.class" to StringDeserializer::class.java,
+            "spring.deserializer.value.delegate.class" to JsonDeserializer::class.java,
+            JsonDeserializer.TRUSTED_PACKAGES to "*",
+            "spring.json.value.default.type" to OrderCreatedEvent::class.java.name,
+            "spring.json.type.mapping" to "com.order.dto.event.OrderCreatedEvent:com.inventory.dto.event.ordered.OrderCreatedEvent"
         )
 
-        val deserializer = JsonDeserializer(OrderCreatedEvent::class.java)
-        deserializer.addTrustedPackages("*")
-
-        return DefaultKafkaConsumerFactory(configProps, StringDeserializer(), deserializer)
+        return DefaultKafkaConsumerFactory(configProps)
     }
 
     @Bean
