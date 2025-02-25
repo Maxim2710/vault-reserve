@@ -25,7 +25,7 @@ class KafkaConfig {
     @Bean
     fun producerFactory(): ProducerFactory<String, Any> {
         val configProps = hashMapOf<String, Any>(
-            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092",
+            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to (System.getenv("KAFKA_BOOTSTRAP_SERVERS") ?: "kafka:9092"),
             ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
             ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to JsonSerializer::class.java,
             ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG to true,
@@ -46,7 +46,7 @@ class KafkaConfig {
     @Bean
     fun consumerFactory(): ConsumerFactory<String, OrderCreatedEvent> {
         val configProps = hashMapOf<String, Any>(
-            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092",
+            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to (System.getenv("KAFKA_BOOTSTRAP_SERVERS") ?: "kafka:9092"),
             ConsumerConfig.GROUP_ID_CONFIG to "inventory-group",
             ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to ErrorHandlingDeserializer::class.java,
             ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to ErrorHandlingDeserializer::class.java,

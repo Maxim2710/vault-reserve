@@ -14,7 +14,7 @@ class KafkaTopicConfig {
     @Bean
     fun kafkaAdmin(): KafkaAdmin {
         val configs = hashMapOf<String, Any>(
-            AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092"
+            AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG to (System.getenv("KAFKA_BOOTSTRAP_SERVERS") ?: "kafka:9092")
         )
 
         return KafkaAdmin(configs)
