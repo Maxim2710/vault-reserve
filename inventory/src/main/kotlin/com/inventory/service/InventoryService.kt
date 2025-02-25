@@ -37,4 +37,17 @@ class InventoryService(
         availableStock = this.availableStock,
         reservedStock = this.reservedStock
     )
+
+    fun getInventoryById(id: Long): InventoryResponseDto {
+        val inventory = inventoryRepository.findById(id)
+            .orElseThrow { throw IllegalArgumentException("User not found with id: $id")}
+
+        return InventoryResponseDto(
+            id = inventory.id,
+            productId = inventory.productId,
+            productName = inventory.productName,
+            availableStock = inventory.availableStock,
+            reservedStock = inventory.reservedStock
+        )
+    }
 }
