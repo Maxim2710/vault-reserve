@@ -13,6 +13,9 @@ data class Inventory(
     @Column(name = "product_id", nullable = false, unique = true)
     val productId: Long,
 
+    @Column(name = "product_name", nullable = false)
+    var productName: String,
+
     @Column(name = "available_stock", nullable = false)
     var availableStock: Int,
 
