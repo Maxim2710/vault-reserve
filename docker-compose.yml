@@ -1,0 +1,103 @@
+version: "3.8"
+
+services:
+  zookeeper:
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+    networks:
+      - mynetwork
+
+  kafka:
+    container_name: kafka
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    networks:
+      - mynetwork
+
+
+  common_postgres:
+    container_name: common_db
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: kafka_account
+      POSTGRES_USER: kafka_admin
+      POSTGRES_PASSWORD: kafka12345
+    volumes:
+      - common_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kafka_admin -d kafka_account"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5435:5432"
+    networks:
+      - mynetwork
+    restart: unless-stopped
+
+  inventory-service:
+    container_name: inventory_service
+    build: ./inventory
+    image: inventory_service:test
+    environment:
+      POSTGRES_HOST: common_postgres
+      POSTGRES_DB: kafka_account
+      POSTGRES_USER: kafka_admin
+      POSTGRES_PASSWORD: kafka12345
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      common_postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    ports:
+      - "8082:8081"
+    networks:
+      - mynetwork
+    restart: unless-stopped
+
+  order-service:
+    container_name: order_service
+    build: ./order
+    image: order_service:test
+    environment:
+      POSTGRES_HOST: common_postgres
+      POSTGRES_DB: kafka_account
+      POSTGRES_USER: kafka_admin
+      POSTGRES_PASSWORD: kafka12345
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      common_postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    ports:
+      - "8083:8080"
+    networks:
+      - mynetwork
+    restart: unless-stopped
+
+volumes:
+  common_data:
+
+networks:
+  mynetwork:
+    driver: bridge
