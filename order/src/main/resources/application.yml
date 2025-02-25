@@ -3,9 +3,14 @@ spring:
     name: order
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
-    username: postgres
-    password: 12345
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/kafka_account
+    username: kafka_admin
+    password: kafka12345
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
 
 server:
   port: 8080
