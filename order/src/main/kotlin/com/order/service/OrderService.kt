@@ -63,4 +63,13 @@ class OrderService(
             createdAt = savedOrder.createdAt.toString()
         )
     }
+
+    @Transactional
+    fun updateOrderStatus(orderId: Long, status: OrderStatus) {
+        val order = orderRepository.findById(orderId)
+            .orElseThrow { IllegalArgumentException("Order bot found with id: $orderId") }
+
+        order.status = status
+        orderRepository.save(order)
+    }
 }
