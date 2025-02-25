@@ -50,4 +50,16 @@ class InventoryService(
             reservedStock = inventory.reservedStock
         )
     }
+
+    fun getAllInventories(): List<InventoryResponseDto> {
+        return inventoryRepository.findAll().map { inventory ->
+            InventoryResponseDto(
+                id = inventory.id,
+                productId = inventory.productId,
+                productName = inventory.productName,
+                availableStock = inventory.availableStock,
+                reservedStock = inventory.reservedStock
+            )
+        }
+    }
 }

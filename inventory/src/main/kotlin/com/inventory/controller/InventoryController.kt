@@ -29,4 +29,10 @@ class InventoryController(
         val response = inventoryService.getInventoryById(id)
         return ResponseEntity.ok(response)
     }
+
+    @GetMapping("/all-inventory")
+    fun getAllInventories(): ResponseEntity<List<InventoryResponseDto>> {
+        val response = inventoryService.getAllInventories()
+        return ResponseEntity.ok(response)
+    }
 }
