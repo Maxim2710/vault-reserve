@@ -18,6 +18,5 @@ data class OrderItem (
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
-    @Column(name = "order")
     val order: Order
 )
