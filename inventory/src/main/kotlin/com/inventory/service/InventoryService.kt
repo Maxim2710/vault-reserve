@@ -2,6 +2,7 @@ package com.inventory.service
 
 import com.inventory.dto.InventoryCreateDto
 import com.inventory.dto.InventoryResponseDto
+import com.inventory.dto.event.ordered.OrderCreatedEvent
 import com.inventory.model.Inventory
 import com.inventory.repository.InventoryRepository
 import org.springframework.stereotype.Service
@@ -49,6 +50,25 @@ class InventoryService(
             availableStock = inventory.availableStock,
             reservedStock = inventory.reservedStock
         )
+    }
+
+    fun reserveStockForOrder(orderEvent: OrderCreatedEvent): Boolean {
+        for (item in orderEvent.items) {
+            val inventoryOpt = inventoryRepository.findByProductId(item.productId)
+            if (inventoryOpt.isEmpty) return false
+
+            val inventory = inventoryOpt.get()
+            if (inventory.availableStock < item.quantity) return false
+        }
+
+        orderEvent.items.forEach { item ->
+            val inventory = inventoryRepository.findByProductId(item.productId).get()
+            inventory.availableStock -= item.quantity
+            inventory.reservedStock += item.quantity
+            inventoryRepository.save(inventory)
+        }
+
+        return true
     }
 
     fun getAllInventories(): List<InventoryResponseDto> {
